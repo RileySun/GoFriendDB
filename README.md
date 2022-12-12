@@ -1,2 +1,2 @@
 # GoFriendDB
- A Graph DB for keeping track of friendships using go
+ A very simple Graph DB for keeping track of friendships using go
