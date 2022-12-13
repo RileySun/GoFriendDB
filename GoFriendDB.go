@@ -141,15 +141,15 @@ func addRelation(person string, other string) {
 }
 
 func removeRelation(id int64) {
-	filtered := make([]Person, 0)
+	filtered := make([]Relation, 0)
 	
-	for _, person := range people {
-		if person.Name != name {
-			filtered = append(filtered, person)
+	for _, relation := range relations {
+		if relation.ID != id {
+			filtered = append(filtered, relation)
 		}
 	}
 	
-    people = filtered
+    relations = filtered
 }
 
 //Util
