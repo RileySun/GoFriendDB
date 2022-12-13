@@ -3,26 +3,31 @@ package main
 import(
 	"fmt"
 	"os"
-	"log"
 	"encoding/json"
+	"sort"
+	"log"
 )
-
+	/*	Declarations	*/
+	
+//Structs
 type Person struct {
 	ID int64 `json:"id"`
 	Name string `json:"name"`
 	Age int64 `json:"age"`
 }
-
 type Relation struct {
 	ID int64 `json:"id"`
 	Person int64 `json:"person"`
 	Other int64 `json:"other"`
 }
 
-
+//Global
 var people []Person
 var relations []Relation
 
+	/*	Functions	*/
+	
+//Main
 func init() {
 	//People
 	peopleData := openDB("People")
@@ -43,10 +48,8 @@ func init() {
 
 func main() {
 	fmt.Println("Go Friend DB")
-	re := getPersonByName("Riley")
-	fmt.Printf("%+v\n", re)
+	//fmt.Printf("%+v\n", temp)
 }
-
 
 //Person
 func getPersonByName(name string) Person {
@@ -79,20 +82,26 @@ func getPersonByAge(age int64) Person {
 	return person
 }
 
-func addPerson(name string, age int64) bool {
-	result := true
-	
-	
-	return result
+func addPerson(name string, age int64) {
+	var newPerson Person
+	newPerson.ID = getNextPersonID()
+	newPerson.Name = name
+	newPerson.Age = age
+	people = append(people, newPerson)	
+	//saveDB("Person")
 }
 
-func removePerson(name string) bool {
-	result := true
+func removePerson(name string) {
+	filtered := make([]Person, 0)
 	
+	for _, person := range people {
+		if person.Name != name {
+			filtered = append(filtered, person)
+		}
+	}
 	
-	return result
+    people = filtered
 }
-
 
 //Relations
 func getRelations(name string) []Person {
@@ -115,18 +124,32 @@ func getRelations(name string) []Person {
 	return relatePeople
 }
 
-func addRelation(person string, other int64) bool {
-	result := true
+func addRelation(person string, other string) {
+	personData := getPersonByName(person)
+	personID := personData.ID
 	
+	otherData := getPersonByName(person)
+	otherID := otherData.ID
 	
-	return result
+	var newRelation Relation
+	newRelation.ID = getNextRelationID()
+	newRelation.Person = personID
+	newRelation.Other = otherID
+	
+	append(relations, newRelation)
+	//saveDB("Relations")
 }
 
-func removeRelation(id int64) bool {
-	result := true
+func removeRelation(id int64) {
+	filtered := make([]Person, 0)
 	
+	for _, person := range people {
+		if person.Name != name {
+			filtered = append(filtered, person)
+		}
+	}
 	
-	return result
+    people = filtered
 }
 
 //Util
@@ -139,6 +162,61 @@ func openDB(database string) []byte {
 	}
 	
 	return data
+}
+
+func saveDB(database string) bool {
+	var result = true
+	var data []byte
+	var err error
+	
+	switch database {
+		case "People":
+			data, err = json.Marshal(people)
+		case "Relations":
+			data, err = json.Marshal(relations)
+		default:
+			break;
+	}
+	
+	if err != nil {
+		errorLog("Can not marshall data.\nError: " + err.Error())
+	}
+	
+	fmt.Println(data, people)
+	
+	//dir, _ := os.Getwd()
+	
+	return result
+}
+
+func getNextPersonID() int64 {
+	var nextID int64 
+	sortedData := people
+	
+	sort.Slice(sortedData, func(a, b int) bool {
+		return sortedData[a].ID < sortedData[b].ID
+	})
+	
+	length := len(sortedData)
+	
+	nextID = sortedData[length - 1].ID + 1
+	
+	return nextID
+}
+
+func getNextRelationID() int64 {
+	var nextID int64 
+	sortedData := relations
+	
+	sort.Slice(sortedData, func(a, b int) bool {
+		return sortedData[a].ID < sortedData[b].ID
+	})
+	
+	length := len(sortedData)
+	
+	nextID = sortedData[length - 1].ID + 1
+	
+	return nextID
 }
 
 func errorLog(message string) {
