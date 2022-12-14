@@ -88,7 +88,7 @@ func addPerson(name string, age int64) {
 	newPerson.Name = name
 	newPerson.Age = age
 	people = append(people, newPerson)	
-	//saveDB("Person")
+	saveDB("People")
 }
 
 func removePerson(name string) {
@@ -101,6 +101,22 @@ func removePerson(name string) {
 	}
 	
     people = filtered
+    saveDB("People")
+}
+
+func getNextPersonID() int64 {
+	var nextID int64 
+	sortedData := people
+	
+	sort.Slice(sortedData, func(a, b int) bool {
+		return sortedData[a].ID < sortedData[b].ID
+	})
+	
+	length := len(sortedData)
+	
+	nextID = sortedData[length - 1].ID + 1
+	
+	return nextID
 }
 
 //Relations
@@ -136,8 +152,8 @@ func addRelation(person string, other string) {
 	newRelation.Person = personID
 	newRelation.Other = otherID
 	
-	append(relations, newRelation)
-	//saveDB("Relations")
+	relations = append(relations, newRelation)
+	saveDB("Relations")
 }
 
 func removeRelation(id int64) {
@@ -150,58 +166,7 @@ func removeRelation(id int64) {
 	}
 	
     relations = filtered
-}
-
-//Util
-func openDB(database string) []byte {
-	dir, _ := os.Getwd()	
-	data, err := os.ReadFile(dir + "/Data/" + database + ".sun") //[]byte, error
-	
-	if err != nil {
-		errorLog("Can not open database " + database + "\nError: " + err.Error())
-	}
-	
-	return data
-}
-
-func saveDB(database string) bool {
-	var result = true
-	var data []byte
-	var err error
-	
-	switch database {
-		case "People":
-			data, err = json.Marshal(people)
-		case "Relations":
-			data, err = json.Marshal(relations)
-		default:
-			break;
-	}
-	
-	if err != nil {
-		errorLog("Can not marshall data.\nError: " + err.Error())
-	}
-	
-	fmt.Println(data, people)
-	
-	//dir, _ := os.Getwd()
-	
-	return result
-}
-
-func getNextPersonID() int64 {
-	var nextID int64 
-	sortedData := people
-	
-	sort.Slice(sortedData, func(a, b int) bool {
-		return sortedData[a].ID < sortedData[b].ID
-	})
-	
-	length := len(sortedData)
-	
-	nextID = sortedData[length - 1].ID + 1
-	
-	return nextID
+    saveDB("Relations")
 }
 
 func getNextRelationID() int64 {
@@ -217,6 +182,44 @@ func getNextRelationID() int64 {
 	nextID = sortedData[length - 1].ID + 1
 	
 	return nextID
+}
+
+//Util
+func openDB(database string) []byte {
+	dir, _ := os.Getwd()	
+	data, err := os.ReadFile(dir + "/Data/" + database + ".sun") //[]byte, error
+	
+	if err != nil {
+		errorLog("Can not open database " + database + "\nError: " + err.Error())
+	}
+	
+	return data
+}
+
+func saveDB(database string) {
+	var data []byte
+	var jsonError error
+	
+	switch database {
+		case "People":
+			data, jsonError = json.MarshalIndent(people, "", "	")
+		case "Relations":
+			data, jsonError = json.MarshalIndent(relations, "", "	")
+		default:
+			break;
+	}
+	
+	if jsonError != nil {
+		errorLog("Can not marshal data.\nError: " + jsonError.Error())
+	}
+	
+	dir, _ := os.Getwd()
+	path := dir + "/Data/" + database + ".sun"
+	saveError := os.WriteFile(path, data, 0755)
+	
+	if saveError != nil {
+		errorLog("Could not save database " + database + "\nError: " + saveError.Error())
+	}
 }
 
 func errorLog(message string) {
